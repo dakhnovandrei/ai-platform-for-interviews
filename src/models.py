@@ -16,3 +16,33 @@ class Users(Base):
     is_active = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    interview_session = relationship('InterviewSessions', back_populates='user')
+
+
+class InterviewSessions(Base):
+    __tablename__ = "interview_sessions"
+
+    interview_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    job_position = Column(String(100), nullable=False)
+    company = Column(String(100))
+    interview_type = Column(String(50))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow())
+    finished_at = Column(DateTime)
+    status = Column(String(20), default='active')
+    feedback = Column(Text)
+
+    user = relationship('Users', back_populates='interview_session')
+    message = relationship('Message', back_populates='session')
+
+
+class Messages(Base):
+    __tablename__ = "messages"
+    message_id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey('interview_session.interview_id'))
+    content = Column(Text, nullable=False)
+    role = Column(String(20), nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow())
+
+    session = relationship('InterviewSession', back_populates='message')

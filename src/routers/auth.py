@@ -52,7 +52,7 @@ def get_current_user(access_token: str = Cookie(None), db: Session = Depends(get
         raise HTTPException(status_code=401, detail="Токен отсутствует")
     try:
         token = access_token.replace("Bearer", "")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decode_access_token(token)
         email: str = payload.get("sub")
         if not email:
             raise HTTPException(status_code=401, detail="Неверный токен")

@@ -25,16 +25,12 @@ class ConnectionManager:
         if user_id in self.active_connections:
             await self.active_connections[user_id].send_json(message)
 
-    # async def broadcast(self, message: str, sender_id: int):
-    #     if sender_id in self.active_connections:
-    #         await self.active_connections[sender_id].send_json(message)
-
 
 manager = ConnectionManager()
 
 
-@chat_router.websocket("/{room_id}/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int, username: str):
+@chat_router.websocket("/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int):
     await manager.connect(websocket, user_id)
     try:
         while True:
