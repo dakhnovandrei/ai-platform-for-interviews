@@ -40,7 +40,7 @@ class ConnectionManager:
             "timestamp": datetime.utcnow().isoformat()
         })
 
-        if len(self.conversation_history) > 20:
+        if len(self.conversation_history[session_id]) > 20:
             self.conversation_history[session_id] = self.conversation_history[session_id][-20:]
 
     def get_conversation_history(self, session_id: int):
@@ -65,7 +65,7 @@ async def get_session_info(session_id: int, db: Session = Depends(get_db)):
         print(f'Ошибка при получении информации с базы данных {e}')
 
 
-async def save_message_to_db(session_id: int, content: str, is_user: bool, db: Session = Depends(get_db)):
+async def save_message_to_db(session_id: int, content: str, is_user: bool, db: Session):
     try:
         message = Messages(
             session_id=session_id,
@@ -90,6 +90,7 @@ async def websocket_endpoint(
         session_info = await get_session_info(session_id, db)
         if not session_info:
             await websocket.close(code=1008, reason="Сессия не найдена")
+            return
 
         welcome_data = {
             "type": "system_message",
@@ -117,12 +118,14 @@ async def websocket_endpoint(
             await save_message_to_db(
                 session_id=session_id,
                 content=user_message,
-                is_user=True
+                is_user=True,
+                db=db
             )
             await save_message_to_db(
                 session_id=session_id,
                 content=ai_response,
-                is_user=False
+                is_user=False,
+                db=db
             )
 
             response_data = {
@@ -130,7 +133,7 @@ async def websocket_endpoint(
                 "content": ai_response,
                 "timestamp": datetime.utcnow().isoformat()
             }
-            await manager.send_personal_message(message=response_data, user_id=session_id)
+            await manager.send_personal_message(session_id, response_data)
 
     except WebSocketDisconnect:
         manager.disconnect(session_id)

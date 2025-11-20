@@ -18,6 +18,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def create_refresh_token(data: dict, expires_delta: datetime.timedelta | None = None):
     to_encode = data.copy()
+    to_encode.update({"type": "refresh"})
     if expires_delta:
         expire = datetime.datetime.utcnow() + expires_delta
     else:
@@ -30,6 +31,7 @@ def create_refresh_token(data: dict, expires_delta: datetime.timedelta | None = 
 
 def create_access_token(data: dict, expires_delta: datetime.timedelta) -> str:
     to_encode = data.copy()
+    to_encode.update({"type": "access"})
     expire = datetime.datetime.utcnow() + expires_delta
     to_encode.update({'exp': expire})
     return jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
@@ -47,18 +49,19 @@ def decode_access_token(token: str) -> dict:
         )
 
 
-def get_current_user(access_token: str = Cookie(None), db: Session = Depends(get_db)):
+async def get_current_user(access_token: str = Cookie(None), db: Session = Depends(get_db)) -> Users:
     if not access_token:
         raise HTTPException(status_code=401, detail="Токен отсутствует")
     try:
-        token = access_token.replace("Bearer", "")
+        token = access_token.replace("Bearer ", "")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if not email:
             raise HTTPException(status_code=401, detail="Неверный токен")
-        user = db.query(Users).filter(Users.email == email).first
-        if not user:
+        user = db.query(Users).filter(Users.email == email).first()
+        if user is None:
             raise HTTPException(status_code=401, detail="Пользователь не найден")
+
         return user
     except (JWTError, ValidationError) as e:
         raise HTTPException(status_code=401, detail="Неверный токен")

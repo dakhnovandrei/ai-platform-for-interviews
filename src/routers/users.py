@@ -29,7 +29,6 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     if exist_user:
         raise HTTPException(status_code=401, detail="Пользователь уже зарегистрирован")
     hashed_password = pwd_context.hash(user.password)
-    print(hashed_password)
     new_user = Users(
         email=user.email,
         username=user.username,
@@ -63,7 +62,7 @@ def login(users: UserLogin, response: Response, db: Session = Depends(get_db)) -
         value=f"Bearer {access_token}",
         httponly=True,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        secure=True,
+        secure=False,
         samesite="lax",
     )
 
@@ -72,7 +71,7 @@ def login(users: UserLogin, response: Response, db: Session = Depends(get_db)) -
         value=f"Bearer {refresh_token}",
         httponly=True,
         max_age=REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-        secure=True,
+        secure=False,
         samesite="lax",
     )
 

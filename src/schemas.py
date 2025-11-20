@@ -47,3 +47,8 @@ class InterviewRequest(BaseModel):
     interview_type: str
     job_position: str
     company: str
+
+
+class InterviewResponse(BaseModel):
+    session_id: int
+    message: str

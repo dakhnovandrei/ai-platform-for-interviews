@@ -3,17 +3,16 @@ from src.routers.users import get_current_user
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from src.database import get_db
-from src.schemas import InterviewRequest
-from src.models import InterviewSessions, Messages
-from src.ML.model import call_ai
+from src.schemas import InterviewRequest, InterviewResponse
+from src.models import InterviewSessions
 
 interview_router = APIRouter()
 
 
-@interview_router.post('/start-interview/{interview_id}/{interview_type}/{position}/{company}')
+@interview_router.post('/start-interview/', response_model=InterviewResponse)
 async def interview(
-        user: Depends(get_current_user),
         interview_data: InterviewRequest,
+        user=Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
     try:
@@ -27,22 +26,9 @@ async def interview(
         db.commit()
         db.refresh(new_interview)
 
-        first_message = await call_ai(
-            message="Начни собеседование с приветствия и уточнения по готовности",
-            interview_type=interview_data.interview_type,
-            position=interview_data.job_position,
-            company=interview_data.company
-        )
-        message = Messages(
+        return InterviewResponse(
             session_id=new_interview.interview_id,
-            content=first_message,
-            is_user=False
+            message=f"Сессия успешно создана. Требуется редирект на /interview/{new_interview.interview_id}"
         )
-        db.add(message)
-        db.commit()
-        return {
-            "session_id": new_interview.interview_id,
-            "first_message": first_message
-        }
     except Exception as e:
         print(f"Ошибка в сохранении интервью в базу данных {e}")

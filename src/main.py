@@ -1,13 +1,11 @@
 import logging
 from fastapi import FastAPI
-from sqlalchemy import text
-
 from src.database import engine, SessionLocal
-from src.routers.users import router
 from authx import AuthX, AuthXConfig
-from src.models import Base, Users
+from src.models import Base, Users, Messages, InterviewSessions
 from src.routers.websocet import chat_router
-
+from src.routers.interview import interview_router
+from src.routers.users import router
 
 # Настраиваем AuthX
 config = AuthXConfig()
@@ -22,6 +20,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.include_router(router, prefix='/api/v1', tags=["Users"])
 app.include_router(chat_router, tags=["Chat"])
+app.include_router(interview_router, prefix='/api/v3', tags=["Interview"])
 
 logger = logging.getLogger("uvicorn")  # использовать логгер Uvicorn
 logger.setLevel(logging.INFO)
