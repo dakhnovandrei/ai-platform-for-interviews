@@ -16,8 +16,6 @@ class Users(Base):
     is_active = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-<<<<<<< Updated upstream
-=======
 
     interview_session = relationship('InterviewSessions', back_populates='user')
 
@@ -48,4 +46,3 @@ class Messages(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow())
 
     session = relationship('InterviewSession', back_populates='message')
->>>>>>> Stashed changes

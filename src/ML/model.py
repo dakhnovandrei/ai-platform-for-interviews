@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-def call_ai(message: str, user_id: int):
-    pass
-=======
 import os
 import requests
 from typing import List, Dict
@@ -65,4 +61,4 @@ async def call_ai(message: str, interview_type: str, position: str, company: str
 
     except requests.exceptions.RequestException as e:
         return f"Ошибка при обращении к AI: {e}"
->>>>>>> Stashed changes
+

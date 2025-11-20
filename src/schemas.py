@@ -43,5 +43,7 @@ class UserResponse(BaseModel):
     subscription_type: str
 
 
-class ChatMessage:
-    pass
+class InterviewRequest(BaseModel):
+    interview_type: str
+    job_position: str
+    company: str

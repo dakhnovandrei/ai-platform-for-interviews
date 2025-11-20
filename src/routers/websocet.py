@@ -2,7 +2,6 @@ from datetime import datetime
 from src.ML.model import call_ai
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
-from src.schemas import ChatMessage
 from src.database import get_db
 from typing import List, Dict
 import json
@@ -31,11 +30,6 @@ class ConnectionManager:
         if user_id in self.active_connections:
             await self.active_connections[user_id].send_json(message)
 
-<<<<<<< Updated upstream
-    # async def broadcast(self, message: str, sender_id: int):
-    #     if sender_id in self.active_connections:
-    #         await self.active_connections[sender_id].send_json(message)
-=======
     def add_to_history(self, session_id: int, message: str, is_user: bool = True):
         if session_id not in self.conversation_history:
             self.conversation_history[session_id] = []
@@ -51,19 +45,12 @@ class ConnectionManager:
 
     def get_conversation_history(self, session_id: int):
         return self.conversation_history.get(session_id, [])
->>>>>>> Stashed changes
 
 
 manager = ConnectionManager()
 
 
-<<<<<<< Updated upstream
-@chat_router.websocket("/{room_id}/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int, username: str):
-    await manager.connect(websocket, user_id)
-=======
 async def get_session_info(session_id: int, db: Session = Depends(get_db)):
->>>>>>> Stashed changes
     try:
         session = db.query(InterviewSessions).filter(InterviewSessions.interview_id == session_id).first()
         if session:
