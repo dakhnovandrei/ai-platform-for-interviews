@@ -1,64 +1,70 @@
 import os
+
+import httpx
 import requests
 from typing import List, Dict
 
 LLAMA_URL = os.getenv("LLAMA_URL")
 
 
-async def call_ai(message: str, interview_type: str, position: str, company: str,
-                  conversation_history: List[Dict] = None):
-    system_prompt = f"""
-        Ты - опытный IT специалист с огромным опытом, который проводит {interview_type} собеседование на позицию: {position}, в компанию: {company}.
+class LLamaInterviewAI:
+    def __init__(self, interview_type: str, position: str, company: str):
+        self.interview_type = interview_type
+        self.position = position
+        self.company = company
+        self.system_prompt = f"""
+        Ты — опытный IT специалист, проводящий {self.interview_type} собеседование
+        на позицию: {self.position} в компанию: {self.company}.
 
-        Твоя задача:
-        1. Задавать релевантные вопросы по теме собеседования
-        2. Анализировать ответы кандидата
-        3. Давать конструктивную обратную связь
-        4. Вести диалог естественно и профессионально
-
-        Текущий контекст: {message}
+        Правила:
+        - Общайся строго на русском языке
+        - Используй профессиональный, уверенный тон
+        - Вопросы должны быть релевантными позиции
+        - Учитывай предыдущие ответы кандидата
+        - Продолжай интервью, никогда не начинай заново
+        - Не разъясняй правил кандидату
+        - Если кандидат уклоняется — мягко возвращай его к теме
+        - Не вставляй подсказки для модели
         """
+        self.conversation_history: list[Dict] = []
 
-    messages = [{
-        "role": "system",
-        "content": system_prompt
-    }]
-
-    if conversation_history:
-        for msg in conversation_history[-5:]:
-            role = "user" if msg.get("is_user", True) else 'assistant'
+    async def ask(self, user_message: str) -> str:
+        self.conversation_history.append({
+            "role": "user",
+            "content": user_message
+        })
+        messages = [{"role": "system", "content": self.system_prompt}]
+        # print(messages)
+        for msg in self.conversation_history[-24:]:
             messages.append({
-                "role": role,
-                "content": msg.get("content", "")
+                "role": msg['role'],
+                "content": msg["content"]
             })
-
-    messages.append({
-        "role": "user",
-        "content": message
-    })
-
-    payload = {
-        "model": "llama3:8b",
-        "messages": messages,
-        "stream": False,
-        "options": {
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "num_ctx": 400
+        payload = {
+            "model": "llama3:8b",
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": 0.6,
+                "top_p": 0.9,
+                "num_ctx": 4096,
+                "repeat_penalty": 1.1,
+            }
         }
-    }
+        # print(payload)
+        async with httpx.AsyncClient(timeout=60) as client:
+            try:
+                response = await client.post(LLAMA_URL, json=payload)
+                response.raise_for_status()
+                ai_answer = response.json()
+                print(ai_answer)
+                assistant_text = ai_answer["message"]["content"]
 
-    try:
-        response = requests.post(
-            LLAMA_URL,
-            json=payload,
-            timeout=30
-        )
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": assistant_text,
+                })
+                return assistant_text
 
-        response.raise_for_status()
-        result = response.json()
-        return result['message']['content']
-
-    except requests.exceptions.RequestException as e:
-        return f"Ошибка при обращении к AI: {e}"
-
+            except Exception as e:
+                return f"Ошибка обращения к ai {e}"

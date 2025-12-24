@@ -32,3 +32,9 @@ async def interview(
         )
     except Exception as e:
         print(f"Ошибка в сохранении интервью в базу данных {e}")
+
+
+@interview_router.get('/interviews')
+async def interviews(user=Depends(get_current_user), db: Session = Depends(get_db)):
+    all_interviews = db.query(InterviewSessions).filter(InterviewSessions.user_id == user.user_id).all()
+    return all_interviews

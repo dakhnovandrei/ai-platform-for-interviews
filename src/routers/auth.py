@@ -37,7 +37,7 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta) -> str:
     return jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
 
 
-def decode_access_token(token: str) -> dict:
+def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
@@ -55,10 +55,10 @@ async def get_current_user(access_token: str = Cookie(None), db: Session = Depen
     try:
         token = access_token.replace("Bearer ", "")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if not email:
+        id: str = payload.get("id")
+        if not id:
             raise HTTPException(status_code=401, detail="Неверный токен")
-        user = db.query(Users).filter(Users.email == email).first()
+        user = db.query(Users).filter(Users.user_id == id).first()
         if user is None:
             raise HTTPException(status_code=401, detail="Пользователь не найден")
 
