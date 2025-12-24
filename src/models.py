@@ -34,15 +34,15 @@ class InterviewSessions(Base):
     feedback = Column(Text)
 
     user = relationship('Users', back_populates='interview_session')
-    message = relationship('Message', back_populates='session')
+    message = relationship('Messages', back_populates='session')
 
 
 class Messages(Base):
     __tablename__ = "messages"
     message_id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey('interview_session.interview_id'))
+    session_id = Column(Integer, ForeignKey('interview_sessions.interview_id'))
     content = Column(Text, nullable=False)
-    role = Column(String(20), nullable=False)
+    is_user = Column(Boolean, nullable=False)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow())
 
-    session = relationship('InterviewSession', back_populates='message')
+    session = relationship('InterviewSessions', back_populates='message')
